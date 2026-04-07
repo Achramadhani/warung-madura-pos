@@ -118,6 +118,57 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  Future<void> _confirmDeleteTransaction(
+      Map<String, dynamic> transaction) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus Transaksi'),
+        content: Text(
+            'Yakin ingin menghapus transaksi ${transaction['code']}? Tindakan ini tidak dapat dibatalkan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteTransaction(transaction);
+    }
+  }
+
+  Future<void> _deleteTransaction(Map<String, dynamic> transaction) async {
+    try {
+      final idTransaksi = transaction['id'] as int;
+      await DbHelper.instance.deleteTransaksi(idTransaksi);
+
+      if (!mounted) return;
+      setState(() {
+        _loadTransactions();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaksi berhasil dihapus'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus transaksi: $e')),
+      );
+    }
+  }
+
   String get _totalOmzet {
     final total = _filteredTransactions.fold<double>(
         0, (sum, txn) => sum + double.tryParse(txn['total'].toString())!);
@@ -347,6 +398,17 @@ class _HistoryPageState extends State<HistoryPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
                   onPressed: () => _printReceipt(txn),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 16),
+                  label: const Text('HAPUS',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade300,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                  onPressed: () => _confirmDeleteTransaction(txn),
                 ),
               ],
             ),

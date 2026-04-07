@@ -202,6 +202,12 @@ class DbHelper {
         where: 'id_transaksi = ?', whereArgs: [idTransaksi]);
   }
 
+  Future<int> deleteTransaksi(int idTransaksi) async {
+    Database db = await instance.database;
+    return await db
+        .delete('transaksi', where: 'id = ?', whereArgs: [idTransaksi]);
+  }
+
   // --- FUNGSI UNTUK TRANSAKSI (SIMPAN DARI KERANJANG) ---
   Future<int> simpanTransaksi(double total, Map<String, dynamic> items) async {
     Database db = await instance.database;

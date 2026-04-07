@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'profile_page.dart';
 import 'printer_settings_page.dart';
 import 'history_page.dart';
-import 'pusat_bantuan_page.dart';
 import 'profile_service.dart';
 import 'backup_service.dart';
 
@@ -325,23 +324,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
 
-            const SizedBox(height: 25),
-
-            // --- GRUP LAINNYA ---
-            _sectionLabel("LAINNYA"),
-            _buildMenuTile(
-              icon: Icons.help_outline,
-              title: "Pusat Bantuan",
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const PusatBantuanPage())),
-            ),
-
             const SizedBox(height: 30),
             const Text(
               "Versi 2.4.0 (Build 129)",
               style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Created by Achmad Ramadhani",
+              style: TextStyle(color: Colors.grey, fontSize: 11),
             ),
             const SizedBox(height: 20),
           ],

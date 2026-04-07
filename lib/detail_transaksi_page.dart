@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:image/image.dart' as img;
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'printer_service.dart';
 import 'profile_service.dart';
 
@@ -18,6 +23,7 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
   String _cashierName = 'Ahmad Fauzi';
   final NumberFormat _currencyFormatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+  final ScreenshotController _screenshotController = ScreenshotController();
 
   @override
   void initState() {
@@ -86,6 +92,47 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
     );
   }
 
+  Future<File?> _generateReceiptImage() async {
+    try {
+      final bytes = await _screenshotController.capture();
+      if (bytes == null) return null;
+
+      final dir = await getTemporaryDirectory();
+      final imagePath = File(
+          '${dir.path}/struk_${DateTime.now().millisecondsSinceEpoch}.png');
+      await imagePath.writeAsBytes(bytes);
+      return imagePath;
+    } catch (e) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membuat gambar struk: $e')),
+      );
+      return null;
+    }
+  }
+
+  Future<void> _shareReceiptImage() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Sedang memproses gambar struk...')),
+    );
+
+    final imageFile = await _generateReceiptImage();
+    if (imageFile == null) return;
+
+    try {
+      await Share.shareXFiles(
+        [XFile(imageFile.path)],
+        text:
+            'Bukti Pembayaran - ${widget.transaction?['code'] ?? 'Transaksi'}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membagikan struk: $e')),
+      );
+    }
+  }
+
   String _buildShareText() {
     final transaction = widget.transaction ?? <String, dynamic>{};
     final code = transaction['code']?.toString() ??
@@ -122,15 +169,146 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
         'Total: $total';
   }
 
-  Future<void> _shareTransaction() async {
-    try {
-      await Share.share(_buildShareText(), subject: 'Detail Transaksi');
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal membagikan transaksi: $e')),
-      );
-    }
+  Widget _buildReceiptWidget() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child:
+                  const Icon(Icons.receipt_long, color: Colors.red, size: 28),
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Center(
+            child: Text(
+              'Bukti Pembayaran',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Text(
+              _storeName.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.05,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('NOMOR TRANSAKSI',
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.transaction?['code']?.toString() ??
+                          'TRX-${widget.transaction?['id'] ?? ''}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text('TANGGAL',
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDate(widget.transaction?['tgl_transaksi'] ?? ''),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text('RINCIAN PESANAN',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black54,
+                  letterSpacing: 0.4)),
+          const SizedBox(height: 8),
+          if (widget.transaction != null &&
+              widget.transaction!['details'] != null)
+            ..._buildOrderItems(widget.transaction!['details'] as List)
+          else
+            _buildOrderItem(
+              name: 'Produk Tidak Tersedia',
+              description: '',
+              amount: 0,
+            ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('TOTAL HARGA',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(
+                  _currencyFormatter.format(double.tryParse(
+                          widget.transaction?['total_harga']?.toString() ??
+                              '') ??
+                      0),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Terima Kasih Atas Kunjungan Anda. Kepuasan Anda adalah prioritas kami. Sampai jumpa di kunjungan berikutnya!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              height: 1.3,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -157,157 +335,9 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  shape: BoxShape.circle,
-                ),
-                child:
-                    const Icon(Icons.receipt_long, color: Colors.red, size: 28),
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Center(
-              child: Text(
-                'Bukti Pembayaran',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Center(
-              child: Text(
-                _storeName.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.05,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.04),
-                    blurRadius: 14,
-                    offset: Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('NOMOR TRANSAKSI',
-                                style: TextStyle(
-                                    fontSize: 10, color: Colors.grey)),
-                            const SizedBox(height: 2),
-                            Text(
-                              widget.transaction?['code']?.toString() ??
-                                  'TRX-${widget.transaction?['id'] ?? ''}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('TANGGAL',
-                                style: TextStyle(
-                                    fontSize: 10, color: Colors.grey)),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatDate(
-                                  widget.transaction?['tgl_transaksi'] ?? ''),
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 12),
-                              textAlign: TextAlign.right,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('RINCIAN PESANAN',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black54,
-                          letterSpacing: 0.4)),
-                  const SizedBox(height: 8),
-                  if (widget.transaction != null &&
-                      widget.transaction!['details'] != null)
-                    ..._buildOrderItems(widget.transaction!['details'] as List)
-                  else
-                    _buildOrderItem(
-                      name: 'Produk Tidak Tersedia',
-                      description: '',
-                      amount: 0,
-                    ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('TOTAL HARGA',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 13)),
-                        Text(
-                          _currencyFormatter.format(double.tryParse(widget
-                                      .transaction?['total_harga']
-                                      ?.toString() ??
-                                  '') ??
-                              0),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: Colors.red),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Terima Kasih Atas Kunjungan Anda. Kepuasan Anda adalah prioritas kami. Sampai jumpa di kunjungan berikutnya!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade600,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
+            Screenshot(
+              controller: _screenshotController,
+              child: _buildReceiptWidget(),
             ),
             const SizedBox(height: 14),
           ],
@@ -335,7 +365,7 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
               children: [
                 Expanded(
                     child: OutlinedButton.icon(
-                        onPressed: _shareTransaction,
+                        onPressed: _shareReceiptImage,
                         icon: const Icon(Icons.share, size: 16),
                         label: const Text("Bagikan"),
                         style: OutlinedButton.styleFrom(
