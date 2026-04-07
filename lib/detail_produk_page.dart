@@ -12,7 +12,8 @@ class DetailProdukPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("Produk Ditemukan", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text("Produk Ditemukan",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -23,11 +24,12 @@ class DetailProdukPage extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             color: Colors.green[50],
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 20),
                 SizedBox(width: 8),
-                Text("Barcode berhasil dipindai", style: TextStyle(color: Colors.green)),
+                Text("Barcode berhasil dipindai",
+                    style: TextStyle(color: Colors.green)),
               ],
             ),
           ),
@@ -46,7 +48,8 @@ class DetailProdukPage extends StatelessWidget {
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(20),
                         image: const DecorationImage(
-                          image: AssetImage('assets/beras.png'), // Sesuaikan assetmu
+                          image: AssetImage(
+                              'assets/beras.png'), // Sesuaikan assetmu
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -56,25 +59,41 @@ class DetailProdukPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("Beras Pandan Wangi\n5kg", 
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                      const Text("Beras Pandan Wangi\n5kg",
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(5)),
-                        child: const Text("PREMIUM", style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            borderRadius: BorderRadius.circular(5)),
+                        child: const Text("PREMIUM",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold)),
                       )
                     ],
                   ),
-                  const Text("Kategori: Sembako", style: TextStyle(color: Colors.grey)),
+                  const Text("Kategori: Sembako",
+                      style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 15),
-                  const Text("Rp 78.500", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red)),
+                  const Text("Rp 78.500",
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red)),
                   const SizedBox(height: 5),
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
-                      const SizedBox(width: 5),
-                      const Text("Stok Tersedia: ", style: TextStyle(color: Colors.grey)),
-                      const Text("24 karung", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Icon(Icons.inventory_2_outlined,
+                          size: 16, color: Colors.grey),
+                      SizedBox(width: 5),
+                      Text("Stok Tersedia: ",
+                          style: TextStyle(color: Colors.grey)),
+                      Text("24 karung",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
@@ -93,7 +112,13 @@ class DetailProdukPage extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), spreadRadius: 1, blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.2),
+            spreadRadius: 1,
+            blurRadius: 10,
+          )
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -101,11 +126,14 @@ class DetailProdukPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Tentukan Jumlah", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Tentukan Jumlah",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               Row(
                 children: [
                   _qtyBtn(Icons.remove),
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 15), child: Text("1")),
+                  const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      child: Text("1")),
                   _qtyBtn(Icons.add),
                 ],
               )
@@ -116,14 +144,17 @@ class DetailProdukPage extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {},
-            child: const Text("Tambahkan ke Keranjang", style: TextStyle(color: Colors.white)),
+            child: const Text("Tambahkan ke Keranjang",
+                style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Batal & Scan Ulang", style: TextStyle(color: Colors.grey)),
+            child: const Text("Batal & Scan Ulang",
+                style: TextStyle(color: Colors.grey)),
           )
         ],
       ),
@@ -133,7 +164,9 @@ class DetailProdukPage extends StatelessWidget {
   Widget _qtyBtn(IconData icon) {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(5)),
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(5)),
       child: Icon(icon, size: 18, color: Colors.red),
     );
   }

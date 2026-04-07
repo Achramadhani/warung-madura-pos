@@ -25,7 +25,17 @@ class _HistoryPageState extends State<HistoryPage> {
     _loadTransactions();
   }
 
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadTransactions() async {
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
+
     final headers = await DbHelper.instance.getAllTransaksi();
     final List<Map<String, dynamic>> txns = [];
 
@@ -43,6 +53,7 @@ class _HistoryPageState extends State<HistoryPage> {
       });
     }
 
+    if (!mounted) return;
     setState(() {
       _transactions = txns;
       _applyFilter();
@@ -95,10 +106,12 @@ class _HistoryPageState extends State<HistoryPage> {
         paymentMethod: paymentMethod,
       );
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Struk berhasil dicetak')),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mencetak struk: $e')),
       );
@@ -130,10 +143,9 @@ class _HistoryPageState extends State<HistoryPage> {
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.red),
-            onPressed: () {
-              _searchFocusNode.requestFocus();
-            },
+            icon: const Icon(Icons.refresh, color: Colors.red),
+            tooltip: 'Refresh',
+            onPressed: _loadTransactions,
           ),
         ],
       ),
@@ -151,8 +163,7 @@ class _HistoryPageState extends State<HistoryPage> {
                   _buildTransactionListHeader(),
                   const SizedBox(height: 10),
                   ..._filteredTransactions
-                      .map((txn) => _buildTransactionItem(context, txn))
-                      .toList(),
+                      .map((txn) => _buildTransactionItem(context, txn)),
                   if (_filteredTransactions.isEmpty)
                     Container(
                       width: double.infinity,
@@ -168,21 +179,6 @@ class _HistoryPageState extends State<HistoryPage> {
                 ],
               ),
             ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.download),
-          label: const Text('Ekspor Laporan (PDF/Excel)'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF101828),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 55),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          ),
-        ),
-      ),
     );
   }
 
@@ -193,7 +189,7 @@ class _HistoryPageState extends State<HistoryPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12)
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 12)
         ],
       ),
       child: Row(
@@ -269,7 +265,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.14),
+                    color: Colors.red.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(20)),
                 child: const Text('+12% vs Kemarin',
                     style: TextStyle(

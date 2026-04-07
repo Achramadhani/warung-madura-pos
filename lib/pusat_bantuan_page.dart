@@ -5,21 +5,26 @@ class PusatBantuanPage extends StatelessWidget {
   const PusatBantuanPage({super.key});
 
   // Contact information
-  static const String phoneNumber = '6281234567890'; // Update with your WhatsApp number
+  static const String phoneNumber =
+      '6281234567890'; // Update with your WhatsApp number
   static const String email = 'support@tokojual.com'; // Update with your email
-  static const String whatsappMessage = 'Halo, saya membutuhkan bantuan untuk toko saya.';
+  static const String whatsappMessage =
+      'Halo, saya membutuhkan bantuan untuk toko saya.';
 
   Future<void> _openWhatsApp() async {
-    final whatsappUrl = 'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(whatsappMessage)}';
+    final whatsappUrl =
+        'https://wa.me/$phoneNumber?text=${Uri.encodeComponent(whatsappMessage)}';
     if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
-      await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+      await launchUrl(Uri.parse(whatsappUrl),
+          mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch $whatsappUrl';
     }
   }
 
   Future<void> _openEmail() async {
-    final emailUrl = 'mailto:$email?subject=Bantuan%20Aplikasi%20Toko&body=Halo,%20saya%20membutuhkan%20bantuan.';
+    const emailUrl =
+        'mailto:$email?subject=Bantuan%20Aplikasi%20Toko&body=Halo,%20saya%20membutuhkan%20bantuan.';
     if (await canLaunchUrl(Uri.parse(emailUrl))) {
       await launchUrl(Uri.parse(emailUrl));
     } else {
@@ -42,7 +47,8 @@ class PusatBantuanPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Pusat Bantuan',
-          style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 24),
+          style: TextStyle(
+              color: Colors.red, fontWeight: FontWeight.bold, fontSize: 24),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -57,7 +63,7 @@ class PusatBantuanPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 10),
-            
+
             // Support Card
             _buildSupportCard(context),
             const SizedBox(height: 30),
@@ -104,7 +110,7 @@ class PusatBantuanPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // WhatsApp Button
           SizedBox(
             width: double.infinity,
@@ -119,12 +125,13 @@ class PusatBantuanPage extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.red,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Email Button
           SizedBox(
             width: double.infinity,
@@ -139,7 +146,8 @@ class PusatBantuanPage extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Colors.white, width: 2),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
@@ -154,14 +162,15 @@ class PusatBantuanPage extends StatelessWidget {
         color: Colors.grey[800],
         borderRadius: BorderRadius.circular(20),
         image: const DecorationImage(
-          image: NetworkImage('https://via.placeholder.com/400x300?text=Support+Team'),
+          image: NetworkImage(
+              'https://via.placeholder.com/400x300?text=Support+Team'),
           fit: BoxFit.cover,
           opacity: 0.4,
         ),
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.7),
+          color: Colors.red.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(20),
         ),
         padding: const EdgeInsets.all(24),

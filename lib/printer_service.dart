@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:blue_thermal_printer/blue_thermal_printer.dart';
 
 class PrinterService {
@@ -22,8 +24,9 @@ class PrinterService {
     try {
       List<BluetoothDevice> devices = await _bluetooth.getBondedDevices();
       return devices;
-    } catch (e) {
-      print('Error scanning devices: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error scanning devices',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
       return [];
     }
   }
@@ -35,8 +38,9 @@ class PrinterService {
       _connectedDevice = device;
       _isConnected = true;
       return true;
-    } catch (e) {
-      print('Error connecting to device: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error connecting to device',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
       _isConnected = false;
       return false;
     }
@@ -48,8 +52,9 @@ class PrinterService {
       await _bluetooth.disconnect();
       _connectedDevice = null;
       _isConnected = false;
-    } catch (e) {
-      print('Error disconnecting: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error disconnecting device',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
     }
   }
 
@@ -59,8 +64,9 @@ class PrinterService {
       bool? connected = await _bluetooth.isConnected;
       _isConnected = connected ?? false;
       return _isConnected;
-    } catch (e) {
-      print('Error checking connection: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error checking connection',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
       _isConnected = false;
       return false;
     }
@@ -125,8 +131,9 @@ class PrinterService {
 
       // Cut paper (optional)
       _bluetooth.paperCut();
-    } catch (e) {
-      print('Error printing: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error printing test receipt',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }
@@ -198,8 +205,9 @@ class PrinterService {
 
       // Cut paper
       _bluetooth.paperCut();
-    } catch (e) {
-      print('Error printing transaction: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error printing transaction receipt',
+          name: 'PrinterService', error: e, stackTrace: stackTrace);
       rethrow;
     }
   }

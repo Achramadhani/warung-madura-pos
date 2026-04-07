@@ -11,10 +11,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  late TextEditingController _nameController;
-  late TextEditingController _storeNameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _storeNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   File? _selectedImage;
   String _currentImageUrl = 'https://via.placeholder.com/150';
   bool _isSaving = false;
@@ -27,12 +27,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadProfileData() async {
     final profile = await ProfileService.getProfile();
+    if (!mounted) return;
     setState(() {
-      _nameController = TextEditingController(text: profile['name']);
-      _storeNameController = TextEditingController(text: profile['storeName']);
-      _emailController = TextEditingController(text: profile['email']);
-      _phoneController = TextEditingController(text: profile['phone']);
-      _currentImageUrl = profile['imagePath'] ?? 'https://via.placeholder.com/150';
+      _nameController.text = profile['name'] ?? '';
+      _storeNameController.text = profile['storeName'] ?? '';
+      _emailController.text = profile['email'] ?? '';
+      _phoneController.text = profile['phone'] ?? '';
+      _currentImageUrl =
+          profile['imagePath'] ?? 'https://via.placeholder.com/150';
     });
   }
 
@@ -68,7 +70,10 @@ class _ProfilePageState extends State<ProfilePage> {
       if (source == null) return;
 
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: source, maxWidth: 1000, maxHeight: 1000);
+      final pickedFile = await picker.pickImage(
+          source: source, maxWidth: 1000, maxHeight: 1000);
+
+      if (!mounted) return;
 
       if (pickedFile != null) {
         setState(() {
@@ -76,7 +81,9 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -108,6 +115,7 @@ class _ProfilePageState extends State<ProfilePage> {
         'imagePath': _selectedImage?.path,
       };
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profil berhasil diperbarui!')),
       );
@@ -117,6 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Navigator.pop(context, updatedProfile);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
@@ -159,7 +168,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.red.withOpacity(0.2), width: 4),
+                        border: Border.all(
+                            color: Colors.red.withValues(alpha: 0.2), width: 4),
                         image: DecorationImage(
                           image: _selectedImage != null
                               ? FileImage(_selectedImage!)
@@ -177,7 +187,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                        child: const Icon(Icons.camera_alt,
+                            color: Colors.white, size: 20),
                       ),
                     ),
                   ],
@@ -189,40 +200,48 @@ class _ProfilePageState extends State<ProfilePage> {
               onTap: _pickImage,
               child: const Text(
                 "Change Photo",
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 40),
 
             // Form Input
-            _buildInputField("Full Name", _nameController, Icons.person_outline),
+            _buildInputField(
+                "Full Name", _nameController, Icons.person_outline),
             const SizedBox(height: 20),
-            _buildInputField("Store Name", _storeNameController, Icons.store_outlined),
+            _buildInputField(
+                "Store Name", _storeNameController, Icons.store_outlined),
             const SizedBox(height: 20),
-            _buildInputField("Email Address", _emailController, Icons.email_outlined),
+            _buildInputField(
+                "Email Address", _emailController, Icons.email_outlined),
             const SizedBox(height: 20),
-            _buildInputField("Phone Number", _phoneController, Icons.phone_android_outlined),
-            
+            _buildInputField(
+                "Phone Number", _phoneController, Icons.phone_android_outlined),
+
             const SizedBox(height: 40),
-            
+
             // Tombol Simpan
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 minimumSize: const Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _isSaving ? null : _saveProfile,
               icon: _isSaving
                   ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
                     )
                   : const Icon(Icons.save_outlined, color: Colors.white),
               label: Text(
                 _isSaving ? "Menyimpan..." : "Save Changes",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -231,7 +250,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildInputField(
+      String label, TextEditingController controller, IconData icon) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -244,10 +264,10 @@ class _ProfilePageState extends State<ProfilePage> {
           controller: controller,
           enabled: !_isSaving,
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.red.withOpacity(0.7)),
+            prefixIcon: Icon(icon, color: Colors.red.withValues(alpha: 0.7)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red.withOpacity(0.1)),
+              borderSide: BorderSide(color: Colors.red.withValues(alpha: 0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

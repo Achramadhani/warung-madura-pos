@@ -27,15 +27,10 @@ class _ScanPageState extends State<ScanPage> {
     if (isScanCompleted) return;
     setState(() => isScanCompleted = true);
 
-    final produkList = await DbHelper.instance.getAllProduk();
-    final produk = produkList.firstWhere(
-      (p) => p['barcode'] == cleanCode,
-      orElse: () => {},
-    );
+    final produk = await DbHelper.instance.getProdukByBarcode(cleanCode);
+    if (!mounted) return;
 
-    if (produk.isNotEmpty) {
-      if (!mounted) return;
-
+    if (produk != null) {
       final cart = Provider.of<CartProvider>(context, listen: false);
       cart.addToCart({
         'barcode': produk['barcode'],
@@ -138,6 +133,13 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
+  Future<void> _refreshScanner() async {
+    await cameraController.stop();
+    await cameraController.start();
+    if (!mounted) return;
+    setState(() => isScanCompleted = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,6 +149,13 @@ class _ScanPageState extends State<ScanPage> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.black87,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Refresh Scanner',
+            onPressed: _refreshScanner,
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),

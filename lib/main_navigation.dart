@@ -12,13 +12,22 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  final Map<int, Widget> _pageCache = {};
 
-  // Daftar halaman utama
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ScanPage(),    // Pastikan nama class di scan_page.dart adalah ScanPage
-    const SettingsPage(), // Halaman Settings sesuai gambar profil yang Anda kirim
-  ];
+  Widget _buildPage(int index) {
+    return _pageCache.putIfAbsent(index, () {
+      switch (index) {
+        case 0:
+          return const HomePage();
+        case 1:
+          return const ScanPage();
+        case 2:
+          return const SettingsPage();
+        default:
+          return const HomePage();
+      }
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -32,7 +41,7 @@ class _MainNavigationState extends State<MainNavigation> {
       // IndexedStack digunakan agar state halaman tidak ter-reset saat pindah tab
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages,
+        children: List<Widget>.generate(3, _buildPage),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -43,7 +52,8 @@ class _MainNavigationState extends State<MainNavigation> {
         backgroundColor: Colors.white,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        selectedLabelStyle:
+            const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         unselectedLabelStyle: const TextStyle(fontSize: 12),
         items: const [
           BottomNavigationBarItem(

@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'backup_service.dart';
 import 'cart_provider.dart';
 import 'main_navigation.dart'; // Sesuaikan dengan file navigasi Anda
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await BackupService().runAutoBackupIfDue();
+  } catch (_) {
+    // Abaikan error backup otomatis agar aplikasi tetap bisa dibuka.
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -23,7 +32,8 @@ class TokoRajawaliApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Toko Rajawali',
       theme: ThemeData(primarySwatch: Colors.red),
-      home: const MainNavigation(), // Pastikan ini mengarah ke navigasi utama Anda
+      home:
+          const MainNavigation(), // Pastikan ini mengarah ke navigasi utama Anda
     );
   }
 }

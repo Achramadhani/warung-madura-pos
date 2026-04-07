@@ -25,7 +25,8 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
         ),
         title: const Text(
           "Produk Ditemukan",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -38,18 +39,21 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             color: const Color(0xFFE8F5E9), // Hijau sangat muda
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 18),
                 SizedBox(width: 8),
                 Text(
                   "Barcode berhasil dipindai",
-                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13),
                 ),
               ],
             ),
           ),
-          
+
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -67,65 +71,86 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: widget.produk['img'] != null && widget.produk['img'].toString().isNotEmpty
+                        child: widget.produk['img'] != null &&
+                                widget.produk['img'].toString().isNotEmpty
                             ? (widget.produk['isLocal'] == 1
                                 ? Image.file(
                                     File(widget.produk['img']),
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        const Icon(Icons.image, size: 100, color: Colors.grey),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.image,
+                                                size: 100, color: Colors.grey),
                                   )
                                 : Image.network(
                                     widget.produk['img'],
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                        const Icon(Icons.image, size: 100, color: Colors.grey),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.image,
+                                                size: 100, color: Colors.grey),
                                   ))
-                            : const Icon(Icons.image, size: 100, color: Colors.grey),
+                            : const Icon(Icons.image,
+                                size: 100, color: Colors.grey),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Info Nama & Label Premium
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         widget.produk['nama_produk'] ?? 'Nama Produk',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.2),
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            height: 1.2),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFEBEE),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
                           "PREMIUM",
-                          style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold),
                         ),
                       )
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text("Kategori: ${widget.produk['cat'] ?? 'Tidak diketahui'}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                  Text("Kategori: ${widget.produk['cat'] ?? 'Tidak diketahui'}",
+                      style: const TextStyle(color: Colors.grey, fontSize: 14)),
                   const SizedBox(height: 16),
-                  
+
                   // Harga
                   Text(
                     "Rp ${widget.produk['harga_jual']?.toString() ?? '0'}",
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.red),
+                    style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Info Stok
                   Row(
                     children: [
-                      const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
+                      const Icon(Icons.inventory_2_outlined,
+                          size: 16, color: Colors.grey),
                       const SizedBox(width: 6),
-                      const Text("Stok Tersedia: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      Text("${widget.produk['stok']?.toString() ?? '0'} pcs", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const Text("Stok Tersedia: ",
+                          style: TextStyle(color: Colors.grey, fontSize: 13)),
+                      Text("${widget.produk['stok']?.toString() ?? '0'} pcs",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ],
@@ -146,7 +171,11 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          )
         ],
       ),
       child: Column(
@@ -156,7 +185,8 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Tentukan Jumlah", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const Text("Tentukan Jumlah",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey[200]!),
@@ -169,7 +199,9 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                     }),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text("$quantity", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text("$quantity",
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                     _qtyBtn(Icons.add, () {
                       setState(() => quantity++);
@@ -180,13 +212,14 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
             ],
           ),
           const SizedBox(height: 20),
-          
+
           // Tombol Tambah ke Keranjang
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               minimumSize: const Size(double.infinity, 55),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 0,
             ),
             onPressed: () {
@@ -201,7 +234,8 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${widget.produk['nama_produk']} ($quantity pcs) ditambahkan ke keranjang'),
+                  content: Text(
+                      '${widget.produk['nama_produk']} ($quantity pcs) ditambahkan ke keranjang'),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -213,32 +247,40 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                 }
               });
             },
-            icon: const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+            icon:
+                const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
             label: const Text(
               "Tambahkan ke Keranjang",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15),
             ),
           ),
           const SizedBox(height: 10),
-          
+
           // Tombol Scan Produk Lain
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
               side: const BorderSide(color: Colors.red),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.qr_code_scanner, color: Colors.red, size: 20),
+            icon:
+                const Icon(Icons.qr_code_scanner, color: Colors.red, size: 20),
             label: const Text(
               "Scan Produk Lain",
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
           const SizedBox(height: 5),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Batal & Scan Ulang", style: TextStyle(color: Colors.grey, fontSize: 12)),
+            child: const Text("Batal & Scan Ulang",
+                style: TextStyle(color: Colors.grey, fontSize: 12)),
           ),
         ],
       ),

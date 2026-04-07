@@ -18,6 +18,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> _allProducts = [];
+  bool _isLoadingProducts = true;
   String _storeName = 'Warung Madura Cabang Pusat';
   String _cashierName = 'Ahmad Fauzi';
   String? _profileImagePath;
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadProducts();
+    _refreshProducts(showSuccessMessage: false);
   }
 
   @override
@@ -39,6 +40,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadProfileData() async {
     final profile = await ProfileService.getProfile();
+    if (!mounted) return;
     setState(() {
       _storeName = profile['storeName']!;
       _cashierName = profile['name']!;
@@ -52,7 +54,22 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadProducts() async {
     final products = await DbHelper.instance.getAllProduk();
+    if (!mounted) return;
     setState(() => _allProducts = products);
+  }
+
+  Future<void> _refreshProducts({bool showSuccessMessage = true}) async {
+    setState(() => _isLoadingProducts = true);
+    await _refreshProfileData();
+    await _loadProducts();
+    if (mounted) {
+      setState(() => _isLoadingProducts = false);
+      if (showSuccessMessage) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Data produk berhasil diperbarui!')),
+        );
+      }
+    }
   }
 
   Future<void> _openAddProductPage() async {
@@ -100,6 +117,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _deleteProduct(String barcode) async {
     await DbHelper.instance.deleteProduk(barcode);
     await _loadProducts();
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Produk berhasil dihapus')));
   }
@@ -140,7 +158,14 @@ class _HomePageState extends State<HomePage> {
                           fontSize: 12,
                           letterSpacing: 0.5)),
                 ),
-                Expanded(child: _buildProductGrid()),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refreshProducts,
+                    child: _isLoadingProducts
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildProductGrid(),
+                  ),
+                ),
               ],
             ),
             _buildFloatingCartBottom(), // Tombol melayang di bawah
@@ -182,6 +207,11 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           const Spacer(),
+          IconButton(
+            onPressed: _refreshProducts,
+            icon: const Icon(Icons.refresh_outlined, color: Colors.black54),
+            tooltip: 'Refresh Data',
+          ),
           IconButton(
             onPressed: _openAddProductPage,
             icon: const Icon(Icons.add_circle_outline, color: Colors.black54),
@@ -262,7 +292,41 @@ class _HomePageState extends State<HomePage> {
   Widget _buildProductGrid() {
     final cart = Provider.of<CartProvider>(context, listen: false);
 
+    if (_filteredProducts.isEmpty) {
+      return ListView(
+        children: const [
+          Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inventory_2_outlined,
+                      size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Belum ada produk',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Tekan tombol refresh untuk memuat data produk',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 5, 20, 100),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -280,7 +344,8 @@ class _HomePageState extends State<HomePage> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)
               ],
             ),
             child: Column(
@@ -442,7 +507,8 @@ class _HomePageState extends State<HomePage> {
               color: const Color(0xFF101828),
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 15)
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3), blurRadius: 15)
               ],
             ),
             child: Row(

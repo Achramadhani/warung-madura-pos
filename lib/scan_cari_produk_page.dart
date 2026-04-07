@@ -33,15 +33,11 @@ class _ScanCariProdukPageState extends State<ScanCariProdukPage> {
     setState(() => isScanCompleted = true);
 
     try {
-      final produkList = await DbHelper.instance.getAllProduk();
-      final produk = produkList.firstWhere(
-        (p) => p['barcode'] == cleanCode,
-        orElse: () => {},
-      );
+      final produk = await DbHelper.instance.getProdukByBarcode(cleanCode);
 
       if (!mounted) return;
 
-      if (produk.isNotEmpty) {
+      if (produk != null) {
         // Produk ditemukan, navigasi ke halaman detail produk
         Navigator.pushReplacement(
           context,
@@ -130,6 +126,13 @@ class _ScanCariProdukPageState extends State<ScanCariProdukPage> {
     );
   }
 
+  Future<void> _refreshScanner() async {
+    await cameraController.stop();
+    await cameraController.start();
+    if (!mounted) return;
+    setState(() => isScanCompleted = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,6 +142,13 @@ class _ScanCariProdukPageState extends State<ScanCariProdukPage> {
             style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            tooltip: 'Refresh Scanner',
+            onPressed: _refreshScanner,
+          ),
+        ],
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -185,7 +195,7 @@ class _ScanCariProdukPageState extends State<ScanCariProdukPage> {
           // Loading indicator saat scan
           if (isScanCompleted)
             Container(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               child: const Center(
                 child: CircularProgressIndicator(color: Colors.red),
               ),

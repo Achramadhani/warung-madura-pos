@@ -18,7 +18,7 @@ class KeranjangPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Sovereign Cart",
+        title: const Text("Keranjang",
             style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,

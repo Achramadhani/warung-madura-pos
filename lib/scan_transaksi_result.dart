@@ -4,12 +4,13 @@ import 'package:provider/provider.dart';
 import 'cart_provider.dart';
 
 class ScanTransaksiResultPage extends StatefulWidget {
-  final Map<String, dynamic> produk; 
+  final Map<String, dynamic> produk;
 
   const ScanTransaksiResultPage({super.key, required this.produk});
 
   @override
-  State<ScanTransaksiResultPage> createState() => _ScanTransaksiResultPageState();
+  State<ScanTransaksiResultPage> createState() =>
+      _ScanTransaksiResultPageState();
 }
 
 class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
@@ -24,8 +25,8 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Hasil Scan", 
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text("Hasil Scan",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -40,12 +41,12 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
             child: Icon(Icons.check_circle, color: Colors.red, size: 45),
           ),
           const SizedBox(height: 12),
-          const Text("Produk Ditemukan!", 
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          Text("Barcode: ${p['barcode'] ?? '-'}", 
-            style: const TextStyle(color: Colors.grey)),
+          const Text("Produk Ditemukan!",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text("Barcode: ${p['barcode'] ?? '-'}",
+              style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 25),
-          
+
           // Product Card
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -55,37 +56,46 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05), 
-                  blurRadius: 10, 
-                  offset: const Offset(0, 5)
-                )
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5))
               ],
             ),
             child: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: _buildProductImage(p['img'], p['isLocal'] == 1 || p['isLocal'] == true),
+                  child: _buildProductImage(
+                      p['img'], p['isLocal'] == 1 || p['isLocal'] == true),
                 ),
                 const SizedBox(width: 15),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(p['cat']?.toString().toUpperCase() ?? "UMUM", 
-                        style: const TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                      Text(p['cat']?.toString().toUpperCase() ?? "UMUM",
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text(p['nama'] ?? p['nama_produk'] ?? "Produk Tanpa Nama", 
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      Text(
+                        p['nama'] ?? p['nama_produk'] ?? "Produk Tanpa Nama",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Text("Rp ${p['harga'] ?? p['harga_jual'] ?? 0}", 
-                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text("Rp ${p['harga'] ?? p['harga_jual'] ?? 0}",
+                          style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18)),
                       const SizedBox(height: 4),
-                      Text("Stok: ${p['stok'] ?? '-'}", 
-                        style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text("Stok: ${p['stok'] ?? '-'}",
+                          style: const TextStyle(
+                              color: Colors.grey, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -100,8 +110,9 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Jumlah Beli", 
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text("Jumlah Beli",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -112,16 +123,19 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
                     children: [
                       IconButton(
                         onPressed: () => setState(() => qty > 1 ? qty-- : null),
-                        icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                        icon: const Icon(Icons.remove_circle_outline,
+                            color: Colors.red),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text("$qty", 
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        child: Text("$qty",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18)),
                       ),
                       IconButton(
                         onPressed: () => setState(() => qty++),
-                        icon: const Icon(Icons.add_circle_outline, color: Colors.red),
+                        icon: const Icon(Icons.add_circle_outline,
+                            color: Colors.red),
                       ),
                     ],
                   ),
@@ -137,19 +151,27 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5))
               ],
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(30)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Total Pembayaran", style: TextStyle(color: Colors.grey)),
-                    Text("Rp ${(p['harga'] ?? p['harga_jual'] ?? 0) * qty}", 
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.red)),
+                    const Text("Total Pembayaran",
+                        style: TextStyle(color: Colors.grey)),
+                    Text("Rp ${(p['harga'] ?? p['harga_jual'] ?? 0) * qty}",
+                        style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -170,11 +192,12 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
                               'isLocal': p['isLocal'],
                             });
                           }
-                          
-                          Navigator.pop(context); 
+
+                          Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text("$qty ${p['nama'] ?? p['nama_produk']} masuk keranjang"),
+                              content: Text(
+                                  "$qty ${p['nama'] ?? p['nama_produk']} masuk keranjang"),
                               backgroundColor: Colors.green,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -182,10 +205,14 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
                         },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.red, width: 1.5),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text("TAMBAH", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        child: const Text("TAMBAH",
+                            style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -198,10 +225,12 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
-                        child: const Text("BAYAR SEKARANG", style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text("BAYAR SEKARANG",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -217,10 +246,10 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
   Widget _buildProductImage(String? url, bool isLocal) {
     if (url == null || url.isEmpty) {
       return Container(
-        width: 85, height: 85, 
-        color: Colors.grey[100], 
-        child: const Icon(Icons.image_not_supported, color: Colors.grey)
-      );
+          width: 85,
+          height: 85,
+          color: Colors.grey[100],
+          child: const Icon(Icons.image_not_supported, color: Colors.grey));
     }
     return isLocal
         ? Image.file(File(url), width: 85, height: 85, fit: BoxFit.cover)
@@ -230,8 +259,9 @@ class _ScanTransaksiResultPageState extends State<ScanTransaksiResultPage> {
             height: 85,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(
-              width: 85, height: 85, 
-              color: Colors.grey[100], 
+              width: 85,
+              height: 85,
+              color: Colors.grey[100],
               child: const Icon(Icons.broken_image, color: Colors.grey),
             ),
           );

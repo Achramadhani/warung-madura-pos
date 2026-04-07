@@ -23,15 +23,33 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _profileImagePath;
 
   final BackupService _backupService = BackupService();
+  bool _autoBackupEnabled = false;
+  String _autoBackupFrequency = BackupService.frequencyDaily;
+  DateTime? _lastAutoBackupAt;
 
   @override
   void initState() {
     super.initState();
     _loadProfileData();
+    _loadAutoBackupSettings();
+  }
+
+  Future<void> _loadAutoBackupSettings() async {
+    final enabled = await _backupService.isAutoBackupEnabled();
+    final frequency = await _backupService.getAutoBackupFrequency();
+    final lastBackupAt = await _backupService.getLastAutoBackupAt();
+
+    if (!mounted) return;
+    setState(() {
+      _autoBackupEnabled = enabled;
+      _autoBackupFrequency = frequency;
+      _lastAutoBackupAt = lastBackupAt;
+    });
   }
 
   Future<void> _loadProfileData() async {
     final profile = await ProfileService.getProfile();
+    if (!mounted) return;
     setState(() {
       _profileName = profile['name']!;
       _profileTitle = profile['storeName']!;
@@ -117,6 +135,61 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _toggleAutoBackup(bool enabled) async {
+    await _backupService.setAutoBackupEnabled(enabled);
+    if (!mounted) return;
+    setState(() => _autoBackupEnabled = enabled);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            enabled ? 'Auto backup diaktifkan' : 'Auto backup dinonaktifkan'),
+      ),
+    );
+  }
+
+  Future<void> _pickAutoBackupFrequency() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.today),
+                title: const Text('Harian'),
+                onTap: () =>
+                    Navigator.pop(context, BackupService.frequencyDaily),
+              ),
+              ListTile(
+                leading: const Icon(Icons.date_range),
+                title: const Text('Mingguan'),
+                onTap: () =>
+                    Navigator.pop(context, BackupService.frequencyWeekly),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected == null) return;
+
+    await _backupService.setAutoBackupFrequency(selected);
+    if (!mounted) return;
+    setState(() => _autoBackupFrequency = selected);
+  }
+
+  String _frequencyLabel(String value) {
+    return value == BackupService.frequencyWeekly ? 'Mingguan' : 'Harian';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(dateTime.day)}/${two(dateTime.month)}/${dateTime.year} ${two(dateTime.hour)}:${two(dateTime.minute)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -147,7 +220,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: Colors.red.withOpacity(0.1), width: 4),
+                          color: Colors.red.withValues(alpha: 0.1), width: 4),
                     ),
                     child: CircleAvatar(
                       radius: 60,
@@ -225,6 +298,32 @@ class _SettingsPageState extends State<SettingsPage> {
               title: "Restore Backup",
               onTap: _confirmRestoreBackup,
             ),
+            _buildSwitchMenuTile(
+              icon: Icons.schedule,
+              title: 'Auto Backup',
+              subtitle: _autoBackupEnabled
+                  ? 'Aktif (${_frequencyLabel(_autoBackupFrequency)})'
+                  : 'Nonaktif',
+              value: _autoBackupEnabled,
+              onChanged: _toggleAutoBackup,
+            ),
+            _buildMenuTile(
+              icon: Icons.tune,
+              title:
+                  'Frekuensi Auto Backup: ${_frequencyLabel(_autoBackupFrequency)}',
+              onTap: _pickAutoBackupFrequency,
+              iconColor: Colors.indigo,
+              textColor: Colors.indigo,
+            ),
+            if (_lastAutoBackupAt != null)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Backup otomatis terakhir: ${_formatDateTime(_lastAutoBackupAt!)}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ),
 
             const SizedBox(height: 25),
 
@@ -283,7 +382,7 @@ class _SettingsPageState extends State<SettingsPage> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -293,7 +392,7 @@ class _SettingsPageState extends State<SettingsPage> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: iconColor, size: 22),
@@ -305,6 +404,54 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
         onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildSwitchMenuTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    Color iconColor = Colors.red,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 22),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Text(subtitle),
+        trailing: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: Colors.red,
+        ),
       ),
     );
   }

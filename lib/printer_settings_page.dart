@@ -27,9 +27,11 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
 
   Future<void> _loadConnectedPrinter() async {
     final isConnected = await _printerService.checkConnection();
+    if (!mounted) return;
     if (isConnected && _printerService.connectedDevice != null) {
       setState(() {
-        _connectedPrinter = _printerService.connectedDevice!.name ?? 'Tidak diketahui';
+        _connectedPrinter =
+            _printerService.connectedDevice!.name ?? 'Tidak diketahui';
         _selectedPrinterId = _printerService.connectedDevice!.address ?? '';
       });
     }
@@ -39,14 +41,17 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
     setState(() => _isScanning = true);
     try {
       List<BluetoothDevice> devices = await _printerService.scanDevices();
+      if (!mounted) return;
       setState(() {
         _availableDevices = devices;
         _isScanning = false;
       });
       if (devices.isEmpty) {
-        _showSnackBar('Tidak ada printer Bluetooth yang ditemukan. Pastikan printer sudah dipair di pengaturan.');
+        _showSnackBar(
+            'Tidak ada printer Bluetooth yang ditemukan. Pastikan printer sudah dipair di pengaturan.');
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isScanning = false);
       _showSnackBar('Error saat scanning: $e');
     }
@@ -55,7 +60,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
   void _testPrint() {
     try {
       if (!_printerService.isConnected) {
-        _showSnackBar('Printer tidak terhubung. Silakan hubungkan printer terlebih dahulu.');
+        _showSnackBar(
+            'Printer tidak terhubung. Silakan hubungkan printer terlebih dahulu.');
         return;
       }
       _showSnackBar('Mengirim print test ke $_connectedPrinter...');
@@ -101,6 +107,7 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
   }
 
   void _showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -111,7 +118,9 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Printer Settings", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 24)),
+        title: const Text("Printer Settings",
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 24)),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
@@ -161,7 +170,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.red),
                           ),
                         )
                       : const Icon(Icons.refresh, color: Colors.red),
@@ -169,11 +179,10 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                 ),
               ],
             ),
-            
+
             // Show connected printer first
-            if (_selectedPrinterId.isNotEmpty)
-              _buildConnectedPrinterCard(),
-            
+            if (_selectedPrinterId.isNotEmpty) _buildConnectedPrinterCard(),
+
             const SizedBox(height: 15),
 
             // Show available printers
@@ -193,12 +202,14 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
               )
             else
               ..._availableDevices.map((device) {
-                if (device.address == _selectedPrinterId) return const SizedBox.shrink();
+                if (device.address == _selectedPrinterId) {
+                  return const SizedBox.shrink();
+                }
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _buildPrinterItemBluetooth(device: device),
                 );
-              }).toList(),
+              }),
 
             const SizedBox(height: 30),
 
@@ -210,10 +221,10 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'PANDUAN PENGATURAN',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -221,8 +232,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                       fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
+                  SizedBox(height: 10),
+                  Text(
                     'Pelajari cara menghubungkan printer thermal dalam 3 langkah mudah.',
                     style: TextStyle(
                       color: Colors.black87,
@@ -266,7 +277,7 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
           ),
         ],
@@ -284,8 +295,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
           ),
           Switch(
             value: value,
-            activeColor: Colors.red,
-            activeTrackColor: Colors.red.withOpacity(0.5),
+            activeThumbColor: Colors.red,
+            activeTrackColor: Colors.red.withValues(alpha: 0.5),
             inactiveThumbColor: Colors.grey,
             onChanged: onChanged,
           ),
@@ -312,9 +323,10 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -335,7 +347,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(Icons.print, color: Colors.white, size: 24),
+                          child: const Icon(Icons.print,
+                              color: Colors.white, size: 24),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -390,7 +403,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
               onPressed: _testPrint,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text(
                 'Test Print',
@@ -413,7 +427,9 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)
+        ],
       ),
       child: Row(
         children: [
@@ -425,7 +441,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
               children: [
                 Text(
                   device.name ?? 'Tidak diketahui',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Text(
                   device.address ?? '',
@@ -438,7 +455,8 @@ class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => _connectPrinter(device),
             child: const Text(

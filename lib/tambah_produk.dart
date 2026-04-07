@@ -52,27 +52,66 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
   }
 
   void _openBarcodeScanner() {
+    final scannerController = MobileScannerController();
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
         child: SizedBox(
-          height: 300,
-          child: MobileScanner(
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                final rawBarcode = barcodes.first.rawValue ?? '';
-                final cleanBarcode = normalizeBarcode(rawBarcode);
-                setState(() {
-                  _barcodeController.text = cleanBarcode;
-                });
-                Navigator.pop(context);
-              }
-            },
+          height: 340,
+          child: Stack(
+            children: [
+              MobileScanner(
+                controller: scannerController,
+                onDetect: (capture) {
+                  final List<Barcode> barcodes = capture.barcodes;
+                  if (barcodes.isNotEmpty) {
+                    final rawBarcode = barcodes.first.rawValue ?? '';
+                    final cleanBarcode = normalizeBarcode(rawBarcode);
+                    setState(() {
+                      _barcodeController.text = cleanBarcode;
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    tooltip: 'Refresh Scanner',
+                    onPressed: () async {
+                      await scannerController.stop();
+                      await scannerController.start();
+                    },
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
+    ).then((_) => scannerController.dispose());
   }
 
   Future<void> _saveProduct() async {

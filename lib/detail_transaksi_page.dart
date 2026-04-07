@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'printer_service.dart';
 import 'profile_service.dart';
 
@@ -77,6 +78,61 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
     }
   }
 
+  Future<void> _refreshPage() async {
+    await _loadProfileData();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Detail transaksi diperbarui')),
+    );
+  }
+
+  String _buildShareText() {
+    final transaction = widget.transaction ?? <String, dynamic>{};
+    final code = transaction['code']?.toString() ??
+        'TRX-${transaction['id']?.toString() ?? '-'}';
+    final tanggal = _formatDate(transaction['tgl_transaksi']?.toString() ??
+        transaction['date']?.toString() ??
+        '');
+    final metode = transaction['metode_bayar']?.toString() ?? 'Tunai';
+    final details = transaction['details'] as List<dynamic>? ?? [];
+
+    final itemLines = details.map((item) {
+      final name = item['nama_produk']?.toString() ?? 'Produk';
+      final qty = item['jumlah'] ?? 1;
+      final price = (item['harga_satuan'] ?? 0).toDouble();
+      final subtotal = price * qty;
+      return '- $name (${qty}x) ${_currencyFormatter.format(subtotal)}';
+    }).join('\n');
+
+    final total = _currencyFormatter.format(
+      double.tryParse(
+            transaction['total_harga']?.toString() ??
+                transaction['total']?.toString() ??
+                '',
+          ) ??
+          0,
+    );
+
+    return 'Bukti Pembayaran $_storeName\n'
+        'No. Transaksi: $code\n'
+        'Tanggal: $tanggal\n'
+        'Metode Bayar: $metode\n\n'
+        'Rincian Pesanan:\n'
+        '${itemLines.isEmpty ? '- Tidak ada item' : itemLines}\n\n'
+        'Total: $total';
+  }
+
+  Future<void> _shareTransaction() async {
+    try {
+      await Share.share(_buildShareText(), subject: 'Detail Transaksi');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membagikan transaksi: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,8 +147,9 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
             onPressed: () => Navigator.pop(context)),
         actions: [
           IconButton(
-              icon: const Icon(Icons.settings, color: Colors.red),
-              onPressed: () {})
+              icon: const Icon(Icons.refresh, color: Colors.red),
+              tooltip: 'Refresh',
+              onPressed: _refreshPage)
         ],
       ),
       body: SingleChildScrollView(
@@ -278,18 +335,9 @@ class _DetailTransaksiPageState extends State<DetailTransaksiPage> {
               children: [
                 Expanded(
                     child: OutlinedButton.icon(
-                        onPressed: () {},
+                        onPressed: _shareTransaction,
                         icon: const Icon(Icons.share, size: 16),
                         label: const Text("Bagikan"),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(40),
-                        ))),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.picture_as_pdf, size: 16),
-                        label: const Text("Simpan PDF"),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(40),
                         ))),

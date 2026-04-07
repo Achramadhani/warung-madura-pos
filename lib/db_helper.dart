@@ -19,13 +19,17 @@ class DbHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 3 && newVersion >= 3) {
+      await db
+          .execute('CREATE INDEX IF NOT EXISTS idx_barcode ON produk(barcode)');
+    }
     if (oldVersion < 2 && newVersion >= 2) {
       // Pastikan tabel produk ada.
       final tableExists = await db.rawQuery(
@@ -117,6 +121,8 @@ class DbHelper {
   Future _createDB(Database db, int version) async {
     // 1. Tabel Produk
     await _createProdukTable(db);
+    await db
+        .execute('CREATE INDEX IF NOT EXISTS idx_barcode ON produk(barcode)');
     await _seedInitialProducts(db);
 
     // 2. Tabel Transaksi (Header)
@@ -154,6 +160,16 @@ class DbHelper {
   Future<List<Map<String, dynamic>>> getAllProduk() async {
     Database db = await instance.database;
     return await db.query('produk');
+  }
+
+  Future<Map<String, dynamic>?> getProdukByBarcode(String barcode) async {
+    Database db = await instance.database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'produk',
+      where: 'barcode = ?',
+      whereArgs: [barcode],
+    );
+    return results.isNotEmpty ? results.first : null;
   }
 
   Future<int> updateProduk(Map<String, dynamic> row) async {
