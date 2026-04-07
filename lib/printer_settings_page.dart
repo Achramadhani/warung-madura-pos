@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:blue_thermal_printer/blue_thermal_printer.dart';
+import 'printer_service.dart';
 
 class PrinterSettingsPage extends StatefulWidget {
   const PrinterSettingsPage({super.key});
@@ -8,123 +10,444 @@ class PrinterSettingsPage extends StatefulWidget {
 }
 
 class _PrinterSettingsPageState extends State<PrinterSettingsPage> {
-  bool isBluetoothOn = true;
+  bool _autoPrintEnabled = true;
+  bool _bluetoothEnabled = true;
+  String _connectedPrinter = '';
+  String _selectedPrinterId = '';
+  List<BluetoothDevice> _availableDevices = [];
+  bool _isScanning = false;
+  final PrinterService _printerService = PrinterService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConnectedPrinter();
+    _scanDevices(); // Auto-scan devices on page load
+  }
+
+  Future<void> _loadConnectedPrinter() async {
+    final isConnected = await _printerService.checkConnection();
+    if (isConnected && _printerService.connectedDevice != null) {
+      setState(() {
+        _connectedPrinter = _printerService.connectedDevice!.name ?? 'Tidak diketahui';
+        _selectedPrinterId = _printerService.connectedDevice!.address ?? '';
+      });
+    }
+  }
+
+  Future<void> _scanDevices() async {
+    setState(() => _isScanning = true);
+    try {
+      List<BluetoothDevice> devices = await _printerService.scanDevices();
+      setState(() {
+        _availableDevices = devices;
+        _isScanning = false;
+      });
+      if (devices.isEmpty) {
+        _showSnackBar('Tidak ada printer Bluetooth yang ditemukan. Pastikan printer sudah dipair di pengaturan.');
+      }
+    } catch (e) {
+      setState(() => _isScanning = false);
+      _showSnackBar('Error saat scanning: $e');
+    }
+  }
+
+  void _testPrint() {
+    try {
+      if (!_printerService.isConnected) {
+        _showSnackBar('Printer tidak terhubung. Silakan hubungkan printer terlebih dahulu.');
+        return;
+      }
+      _showSnackBar('Mengirim print test ke $_connectedPrinter...');
+      _printerService.printTestReceipt().then((_) {
+        _showSnackBar('Test print berhasil dikirim!');
+      }).catchError((e) {
+        _showSnackBar('Error: $e');
+      });
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    }
+  }
+
+  Future<void> _connectPrinter(BluetoothDevice device) async {
+    try {
+      _showSnackBar('Menghubungkan ke ${device.name}...');
+      bool success = await _printerService.connect(device);
+      if (success) {
+        setState(() {
+          _connectedPrinter = device.name ?? 'Tidak diketahui';
+          _selectedPrinterId = device.address ?? '';
+        });
+        _showSnackBar('Berhasil terhubung ke ${device.name}');
+      } else {
+        _showSnackBar('Gagal terhubung ke ${device.name}');
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    }
+  }
+
+  Future<void> _disconnectPrinter() async {
+    try {
+      await _printerService.disconnect();
+      setState(() {
+        _connectedPrinter = '';
+        _selectedPrinterId = '';
+      });
+      _showSnackBar('Terputus dari printer');
+    } catch (e) {
+      _showSnackBar('Error: $e');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text("Pengaturan Printer", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text("Printer Settings", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 24)),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.red), onPressed: () => Navigator.pop(context)),
-        actions: [IconButton(icon: const Icon(Icons.settings, color: Colors.red), onPressed: () {})],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Switch Bluetooth
-            _buildCard(
-              child: ListTile(
-                leading: CircleAvatar(backgroundColor: Colors.red.withOpacity(0.1), child: const Icon(Icons.bluetooth, color: Colors.red)),
-                title: const Text("Bluetooth", style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text("Aktifkan untuk mencari printer thermal", style: TextStyle(fontSize: 12)),
-                trailing: Switch(value: isBluetoothOn, activeColor: Colors.red, onChanged: (v) => setState(() => isBluetoothOn = v)),
-              ),
+            // --- SISTEM SECTION ---
+            _sectionLabel('SISTEM'),
+            _buildToggleTile(
+              title: 'Auto-print Struk',
+              value: _autoPrintEnabled,
+              onChanged: (val) => setState(() => _autoPrintEnabled = val),
             ),
-            const SizedBox(height: 20),
-            _sectionHeader("PRINTER TERHUBUNG", "Cari Printer"),
-            
-            // Printer Terhubung Card
-            _buildConnectedPrinter(),
+            const SizedBox(height: 25),
 
-            const SizedBox(height: 20),
-            _sectionHeader("PRINTER TERSEDIA", ""),
-            _buildPrinterItem("Panda PRJ-80-01", "Kekuatan Sinyal: Kuat"),
-            _buildPrinterItem("Unknown Thermal Printer", "Kekuatan Sinyal: Lemah"),
-            _buildPrinterItem("Epson TM-T82", "Terakhir digunakan 2 hari lalu"),
+            // --- NIRKABEL SECTION ---
+            _sectionLabel('NIRKABEL'),
+            _buildToggleTile(
+              title: 'Bluetooth',
+              value: _bluetoothEnabled,
+              onChanged: (val) {
+                setState(() => _bluetoothEnabled = val);
+                if (val) {
+                  _showSnackBar('Bluetooth diaktifkan');
+                } else {
+                  _disconnectPrinter();
+                }
+              },
+            ),
+            const SizedBox(height: 25),
+
+            // --- PERANGKAT TERSEDIA SECTION ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _sectionLabel('PERANGKAT TERSEDIA'),
+                IconButton(
+                  icon: _isScanning
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                          ),
+                        )
+                      : const Icon(Icons.refresh, color: Colors.red),
+                  onPressed: _isScanning ? null : _scanDevices,
+                ),
+              ],
+            ),
             
-            const SizedBox(height: 20),
-            // Tips Card
+            // Show connected printer first
+            if (_selectedPrinterId.isNotEmpty)
+              _buildConnectedPrinterCard(),
+            
+            const SizedBox(height: 15),
+
+            // Show available printers
+            if (_availableDevices.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: const Text(
+                  'Tidak ada printer ditemukan. Pastikan printer sudah dipair di Bluetooth settings.',
+                  style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ..._availableDevices.map((device) {
+                if (device.address == _selectedPrinterId) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildPrinterItemBluetooth(device: device),
+                );
+              }).toList(),
+
+            const SizedBox(height: 30),
+
+            // --- PANDUAN PENGATURAN SECTION ---
+            _sectionLabel('PANDUAN PENGATURAN'),
             Container(
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(color: Colors.blue.withOpacity(0.05), borderRadius: BorderRadius.circular(15)),
-              child: const Column(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Butuh Bantuan?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  SizedBox(height: 5),
-                  Text("Pastikan printer Anda dalam mode pairing dan berada dalam radius 5 meter.", style: TextStyle(color: Colors.blueGrey, fontSize: 13)),
+                  const Text(
+                    'PANDUAN PENGATURAN',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Pelajari cara menghubungkan printer thermal dalam 3 langkah mudah.',
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
                 ],
               ),
-            )
+            ),
           ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ElevatedButton.icon(
-          onPressed: () {},
-          icon: const Icon(Icons.search),
-          label: const Text("Pindai Ulang Perangkat"),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
       ),
     );
   }
 
-  Widget _buildCard({required Widget child}) => Container(
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)]),
-    child: child,
-  );
-
-  Widget _sectionHeader(String title, String action) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
-      if (action.isNotEmpty) TextButton.icon(onPressed: () {}, icon: const Icon(Icons.refresh, size: 14), label: Text(action, style: const TextStyle(fontSize: 12))),
-    ],
-  );
-
-  Widget _buildConnectedPrinter() => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(20)),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Text("TERHUBUNG", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold))),
-            const Icon(Icons.print, color: Colors.white, size: 30),
-          ],
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.blueGrey,
+          letterSpacing: 0.5,
         ),
-        const SizedBox(height: 15),
-        const Text("Rongta RP326-U", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-        const Text("Alamat: 00:11:22:33:FF:EE", style: TextStyle(color: Colors.white70, fontSize: 12)),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(child: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.red), child: const Text("Tes Print"))),
-            const SizedBox(width: 10),
-            Expanded(child: OutlinedButton(onPressed: () {}, style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white), child: const Text("Putus Koneksi"))),
-          ],
-        )
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
-  Widget _buildPrinterItem(String name, String desc) => Card(
-    margin: const EdgeInsets.only(top: 10),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: ListTile(
-      leading: const Icon(Icons.print_outlined),
-      title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(desc, style: const TextStyle(fontSize: 12)),
-      trailing: ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: Colors.white, side: const BorderSide(color: Colors.red), foregroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text("Hubungkan")),
-    ),
-  );
+  Widget _buildToggleTile({
+    required String title,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          Switch(
+            value: value,
+            activeColor: Colors.red,
+            activeTrackColor: Colors.red.withOpacity(0.5),
+            inactiveThumbColor: Colors.grey,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectedPrinterCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE8E8),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Terhubung',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.print, color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _connectedPrinter,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'Terhubung',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: _testPrint,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text(
+                'Test Print',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrinterItemBluetooth({required BluetoothDevice device}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.print, color: Colors.grey, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device.name ?? 'Tidak diketahui',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Text(
+                  device.address ?? '',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => _connectPrinter(device),
+            child: const Text(
+              'Hubungkan',
+              style: TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

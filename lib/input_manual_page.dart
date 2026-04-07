@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'produk_ditemukan.dart';
+import 'db_helper.dart';
 
 class InputManualPage extends StatefulWidget {
   const InputManualPage({super.key});
@@ -17,6 +18,39 @@ class _InputManualPageState extends State<InputManualPage> {
       else if (val == "X") { if (code.isNotEmpty) code = code.substring(0, code.length - 1); }
       else { if (code.length < 13) code += val; }
     });
+  }
+
+  Future<void> _cariProduk() async {
+    try {
+      final produkList = await DbHelper.instance.getAllProduk();
+      final produk = produkList.firstWhere(
+        (p) => p['barcode'] == code,
+        orElse: () => {},
+      );
+
+      if (!mounted) return;
+
+      if (produk.isNotEmpty) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProdukDitemukanPage(produk: produk),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Produk dengan barcode $code tidak ditemukan'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
   }
 
   @override
@@ -50,7 +84,7 @@ class _InputManualPageState extends State<InputManualPage> {
             padding: const EdgeInsets.all(24),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, minimumSize: const Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              onPressed: code.isEmpty ? null : () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProdukDitemukanPage(code: code))),
+              onPressed: code.isEmpty ? null : _cariProduk,
               child: const Text("Cari Produk", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           )

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
-import 'db_helper.dart'; 
+import 'db_helper.dart';
 import 'cart_provider.dart';
+import 'utils.dart';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -12,7 +13,7 @@ class ScanPage extends StatefulWidget {
 }
 
 class _ScanPageState extends State<ScanPage> {
-  bool isScanCompleted = false; 
+  bool isScanCompleted = false;
   late MobileScannerController cameraController;
 
   @override
@@ -22,18 +23,19 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   void _prosesHasilScan(String code) async {
-    if (isScanCompleted) return; 
+    final cleanCode = normalizeBarcode(code);
+    if (isScanCompleted) return;
     setState(() => isScanCompleted = true);
 
     final produkList = await DbHelper.instance.getAllProduk();
     final produk = produkList.firstWhere(
-      (p) => p['barcode'] == code, 
+      (p) => p['barcode'] == cleanCode,
       orElse: () => {},
     );
 
     if (produk.isNotEmpty) {
       if (!mounted) return;
-      
+
       final cart = Provider.of<CartProvider>(context, listen: false);
       cart.addToCart({
         'barcode': produk['barcode'],
@@ -59,7 +61,8 @@ class _ScanPageState extends State<ScanPage> {
     }
   }
 
-  void _showSuccessPopup({required String productName, required VoidCallback onConfirm}) {
+  void _showSuccessPopup(
+      {required String productName, required VoidCallback onConfirm}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -72,9 +75,12 @@ class _ScanPageState extends State<ScanPage> {
             children: [
               const Icon(Icons.check_circle, color: Colors.green, size: 60),
               const SizedBox(height: 15),
-              const Text('Scan Berhasil!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text('Scan Berhasil!',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 10),
-              Text('$productName ditambahkan ke keranjang', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+              Text('$productName ditambahkan ke keranjang',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
@@ -82,7 +88,8 @@ class _ScanPageState extends State<ScanPage> {
                   onConfirm();
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Lanjut Scan', style: TextStyle(color: Colors.white)),
+                child: const Text('Lanjut Scan',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -91,7 +98,8 @@ class _ScanPageState extends State<ScanPage> {
     );
   }
 
-  void _showErrorPopup({required String barcode, required VoidCallback onConfirm}) {
+  void _showErrorPopup(
+      {required String barcode, required VoidCallback onConfirm}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -104,9 +112,15 @@ class _ScanPageState extends State<ScanPage> {
             children: [
               const Icon(Icons.error, color: Colors.red, size: 60),
               const SizedBox(height: 15),
-              const Text('Produk Tidak Ditemukan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.red)),
+              const Text('Produk Tidak Ditemukan',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.red)),
               const SizedBox(height: 10),
-              Text('Barcode $barcode belum terdaftar', textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+              Text('Barcode $barcode belum terdaftar',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
@@ -114,7 +128,8 @@ class _ScanPageState extends State<ScanPage> {
                   onConfirm();
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+                child: const Text('Coba Lagi',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
@@ -128,7 +143,8 @@ class _ScanPageState extends State<ScanPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan Produk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Scan Produk',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.black87,
         elevation: 0,
         leading: IconButton(
@@ -145,13 +161,13 @@ class _ScanPageState extends State<ScanPage> {
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 if (barcode.rawValue != null) {
-                  _prosesHasilScan(barcode.rawValue!);
+                  _prosesHasilScan(normalizeBarcode(barcode.rawValue!));
                   break;
                 }
               }
             },
           ),
-          
+
           // OVERLAY UI
           Center(
             child: Column(
@@ -167,7 +183,7 @@ class _ScanPageState extends State<ScanPage> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                
+
                 // RED RECTANGLE CORNERS
                 SizedBox(
                   width: 280,
@@ -179,7 +195,7 @@ class _ScanPageState extends State<ScanPage> {
               ],
             ),
           ),
-          
+
           // BOTTOM TEXT
           Positioned(
             bottom: 60,
@@ -189,7 +205,8 @@ class _ScanPageState extends State<ScanPage> {
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(25),
@@ -216,7 +233,7 @@ class _ScanPageState extends State<ScanPage> {
               ),
             ),
           ),
-          
+
           // FLASHLIGHT BUTTON
           Positioned(
             bottom: 20,

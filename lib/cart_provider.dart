@@ -58,6 +58,35 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void addToCartWithQuantity(Map<String, dynamic> produk, {int quantity = 1}) {
+    String barcode = produk['barcode']?.toString() ?? DateTime.now().toString();
+    
+    if (_items.containsKey(barcode)) {
+      _items.update(
+        barcode,
+        (existing) => CartItem(
+          name: existing.name,
+          price: existing.price,
+          img: existing.img,
+          isLocal: existing.isLocal,
+          quantity: existing.quantity + quantity,
+        ),
+      );
+    } else {
+      _items.putIfAbsent(
+        barcode,
+        () => CartItem(
+          name: produk['nama_produk'] ?? produk['nama'] ?? "Produk",
+          price: (produk['harga_jual'] ?? produk['harga'] ?? 0).toDouble(),
+          img: produk['img'] ?? "",
+          isLocal: produk['isLocal'] == 1 || produk['isLocal'] == true,
+          quantity: quantity,
+        ),
+      );
+    }
+    notifyListeners();
+  }
+
   void removeSingleItem(String barcode) {
     if (!_items.containsKey(barcode)) return;
     if (_items[barcode]!.quantity > 1) {

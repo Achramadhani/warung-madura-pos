@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:provider/provider.dart';
+import 'cart_provider.dart';
 
 class ProdukDitemukanPage extends StatefulWidget {
-  final String code;
-  const ProdukDitemukanPage({super.key, required this.code});
+  final Map<String, dynamic> produk;
+  const ProdukDitemukanPage({super.key, required this.produk});
 
   @override
   State<ProdukDitemukanPage> createState() => _ProdukDitemukanPageState();
@@ -53,7 +56,7 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gambar Produk (Beras Pandan Wangi)
+                  // Gambar Produk
                   Center(
                     child: Container(
                       height: 280,
@@ -64,12 +67,21 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          'https://api.deepai.org/job-view-file/3f9e7b2a-8d3c-4e8c-9b5a-7f6d5c4b3a21/outputs/output.jpg', // Ganti dengan path lokal kamu
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => 
-                              const Icon(Icons.image, size: 100, color: Colors.grey),
-                        ),
+                        child: widget.produk['img'] != null && widget.produk['img'].toString().isNotEmpty
+                            ? (widget.produk['isLocal'] == 1
+                                ? Image.file(
+                                    File(widget.produk['img']),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.image, size: 100, color: Colors.grey),
+                                  )
+                                : Image.network(
+                                    widget.produk['img'],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        const Icon(Icons.image, size: 100, color: Colors.grey),
+                                  ))
+                            : const Icon(Icons.image, size: 100, color: Colors.grey),
                       ),
                     ),
                   ),
@@ -79,9 +91,9 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Beras Pandan Wangi\n5kg",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.2),
+                      Text(
+                        widget.produk['nama_produk'] ?? 'Nama Produk',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.2),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -97,23 +109,23 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text("Kategori: Sembako", style: TextStyle(color: Colors.grey, fontSize: 14)),
+                  Text("Kategori: ${widget.produk['cat'] ?? 'Tidak diketahui'}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
                   const SizedBox(height: 16),
                   
                   // Harga
-                  const Text(
-                    "Rp 78.500",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.red),
+                  Text(
+                    "Rp ${widget.produk['harga_jual']?.toString() ?? '0'}",
+                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.red),
                   ),
                   const SizedBox(height: 8),
                   
                   // Info Stok
                   Row(
-                    children: const [
-                      Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
-                      SizedBox(width: 6),
-                      Text("Stok Tersedia: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                      Text("24 karung", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    children: [
+                      const Icon(Icons.inventory_2_outlined, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      const Text("Stok Tersedia: ", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                      Text("${widget.produk['stok']?.toString() ?? '0'} pcs", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ],
                   ),
                 ],
@@ -178,7 +190,28 @@ class _ProdukDitemukanPageState extends State<ProdukDitemukanPage> {
               elevation: 0,
             ),
             onPressed: () {
-              // Logika keranjang di sini
+              final cart = Provider.of<CartProvider>(context, listen: false);
+              cart.addToCartWithQuantity({
+                'barcode': widget.produk['barcode'],
+                'nama_produk': widget.produk['nama_produk'],
+                'harga_jual': widget.produk['harga_jual'],
+                'img': widget.produk['img'],
+                'isLocal': widget.produk['isLocal'] == 1,
+              }, quantity: quantity);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${widget.produk['nama_produk']} ($quantity pcs) ditambahkan ke keranjang'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+
+              // Kembali ke halaman sebelumnya setelah delay
+              Future.delayed(const Duration(seconds: 1), () {
+                if (mounted) {
+                  Navigator.pop(context);
+                }
+              });
             },
             icon: const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
             label: const Text(

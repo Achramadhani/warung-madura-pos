@@ -173,7 +173,7 @@ class _EditProdukPageState extends State<EditProdukPage> {
       Container(padding: const EdgeInsets.symmetric(horizontal: 12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.grey.shade300)),
         child: DropdownButtonHideUnderline(child: DropdownButton<String>(
           value: _selectedCategory, isExpanded: true,
-          items: ["GORENGAN", "MINUMAN", "SEMBAKO", "LAINNYA"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: ["MINUMAN", "SEMBAKO", "LAINNYA"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: (val) => setState(() => _selectedCategory = val!),
         ))),
       const SizedBox(height: 15),

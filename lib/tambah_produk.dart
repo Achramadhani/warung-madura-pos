@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'db_helper.dart';
+import 'utils.dart';
 
 class TambahProdukPage extends StatefulWidget {
   final String? barcode;
@@ -25,7 +26,7 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
   @override
   void initState() {
     super.initState();
-    _barcodeController = TextEditingController(text: widget.barcode ?? '0000 0000 0000');
+    _barcodeController = TextEditingController(text: widget.barcode ?? '');
     _namaController = TextEditingController();
     _hargaController = TextEditingController(text: '0');
     _stokController = TextEditingController(text: '0');
@@ -41,7 +42,8 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -59,9 +61,10 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
             onDetect: (capture) {
               final List<Barcode> barcodes = capture.barcodes;
               if (barcodes.isNotEmpty) {
-                final barcode = barcodes.first.rawValue ?? '';
+                final rawBarcode = barcodes.first.rawValue ?? '';
+                final cleanBarcode = normalizeBarcode(rawBarcode);
                 setState(() {
-                  _barcodeController.text = barcode;
+                  _barcodeController.text = cleanBarcode;
                 });
                 Navigator.pop(context);
               }
@@ -73,9 +76,10 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
   }
 
   Future<void> _saveProduct() async {
-    final barcode = _barcodeController.text.trim().isEmpty
+    final rawInput = _barcodeController.text;
+    final barcode = normalizeBarcode(rawInput).isEmpty
         ? DateTime.now().millisecondsSinceEpoch.toString()
-        : _barcodeController.text.trim();
+        : normalizeBarcode(rawInput);
     final name = _namaController.text.trim();
     final price = int.tryParse(_hargaController.text.trim()) ?? 0;
     final stock = int.tryParse(_stokController.text.trim()) ?? 0;
@@ -103,7 +107,9 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Produk berhasil disimpan'), backgroundColor: Colors.green),
+        const SnackBar(
+            content: Text('Produk berhasil disimpan'),
+            backgroundColor: Colors.green),
       );
       Navigator.pop(context, true);
     } catch (e) {
@@ -123,7 +129,8 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('TAMBAH PRODUK', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+        title: const Text('TAMBAH PRODUK',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -144,7 +151,10 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: _imageFile != null
-                        ? Image.file(_imageFile!, height: 200, width: double.infinity, fit: BoxFit.cover)
+                        ? Image.file(_imageFile!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover)
                         : Container(
                             height: 200,
                             width: double.infinity,
@@ -152,7 +162,8 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
                               color: Colors.grey[300],
                               borderRadius: BorderRadius.circular(15),
                             ),
-                            child: const Icon(Icons.image, size: 80, color: Colors.grey),
+                            child: const Icon(Icons.image,
+                                size: 80, color: Colors.grey),
                           ),
                   ),
                   Positioned(
@@ -170,7 +181,7 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // TOMBOL SCAN BARCODE
             Center(
               child: ElevatedButton.icon(
@@ -190,7 +201,8 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
 
             // ATAU MASUKKAN MANUAL
             const Center(
-              child: Text('ATAU MASUKKAN MANUAL', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              child: Text('ATAU MASUKKAN MANUAL',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
             ),
             const SizedBox(height: 25),
 
@@ -228,7 +240,9 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       side: const BorderSide(color: Colors.grey),
                     ),
-                    child: const Text('BATAL', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                    child: const Text('BATAL',
+                        style: TextStyle(
+                            color: Colors.black, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -239,7 +253,9 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
                       backgroundColor: Colors.red,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    child: const Text('TAMBAH PRODUK', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    child: const Text('TAMBAH PRODUK',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -251,10 +267,15 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
   }
 
   Widget _buildLabel(String label) {
-    return Text(label, style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.bold, fontSize: 12));
+    return Text(label,
+        style: TextStyle(
+            color: Colors.grey[700],
+            fontWeight: FontWeight.bold,
+            fontSize: 12));
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {bool isNumber = false}) {
+  Widget _buildTextField(TextEditingController controller, String hint,
+      {bool isNumber = false}) {
     return TextField(
       controller: controller,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
@@ -262,8 +283,11 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF8F0F1),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
@@ -306,8 +330,11 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
         prefixText: 'IDR  ',
         filled: true,
         fillColor: const Color(0xFFF8F0F1),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
@@ -324,7 +351,7 @@ class _TambahProdukPageState extends State<TambahProdukPage> {
         child: DropdownButton<String>(
           value: _selectedKategori,
           isExpanded: true,
-          items: ['SEMBAKO', 'MINUMAN', 'GORENGAN', 'LAINNYA']
+          items: ['SEMBAKO', 'MINUMAN', 'LAINNYA']
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
           onChanged: (value) {

@@ -20,11 +20,21 @@ dependencies:
   path_provider: ^2.1.2
   sqflite_common_ffi_web: ^1.1.1
   intl: ^0.20.2
+  url_launcher: ^6.2.0
+  shared_preferences: ^2.2.2
+  blue_thermal_printer: ^1.1.5
+  esc_pos_utils: ^1.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.10.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: assets/logo.png
 
 flutter:
   uses-material-design: true
